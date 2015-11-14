@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 
+#include "video.h"
 #include "timer.h"
 
 #include "sw.h"

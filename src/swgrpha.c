@@ -27,6 +27,7 @@
 
 #include "video.h"
 
+#include "swend.h"
 #include "sw.h"
 #include "swdisp.h"
 #include "swground.h"
