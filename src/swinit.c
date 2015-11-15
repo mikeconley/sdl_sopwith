@@ -1010,7 +1010,8 @@ void swrestart()
 
 	// sdh 27/10/2001: moved all level init stuff into swinitlevel
 
-	longjmp(envrestart, 0);
+  
+	//longjmp(envrestart, 0);
 }
 
 // init game

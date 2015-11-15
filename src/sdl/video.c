@@ -28,12 +28,16 @@
 #include <string.h>
 #include <SDL.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include "video.h"
 #include "sw.h"
 
 // lcd mode to emulate my old laptop i used to play sopwith on :)
 
-//#define LCD
+#define LCD
 
 static SDL_Color cga_pal[] = {
 #ifdef LCD
@@ -69,9 +73,9 @@ static int getcolor(int r, int g, int b)
 		    (g - pal->colors[i].g) * (g - pal->colors[i].g) +
 		    (b - pal->colors[i].b) * (b - pal->colors[i].b);
 
-//              printf("%i, %i, %i\n",
-//                     pal->colors[i].r, pal->colors[i].g,
-//                     pal->colors[i].b);
+              printf("%i, %i, %i\n",
+                     pal->colors[i].r, pal->colors[i].g,
+                     pal->colors[i].b);
 
 		if (!diff)
 			return i;
@@ -155,9 +159,9 @@ void Vid_Update()
 
 	if (vid_double_size)
 		Vid_UpdateScaled();
-	else 
+	else {
 		SDL_BlitSurface(screenbuf, NULL, screen, NULL);
-
+        }
 	SDL_UpdateRect(screen, 0, 0, screen->w, screen->h);
 
 	SDL_LockSurface(screenbuf);
@@ -224,6 +228,10 @@ static void Vid_SetMode()
 	int w, h;
 	int flags = 0;
 
+#ifdef __EMSCRIPTEN__
+	EM_ASM("SDL.defaults.copyOnLock = false;");
+#endif
+
 	printf("CGA Screen Emulation\n");
 	printf("init screen: ");
 
@@ -245,7 +253,7 @@ static void Vid_SetMode()
 		h *= 2;
 	}
 
-	flags = SDL_HWPALETTE;
+	//flags = SDL_HWPALETTE;
 	if (vid_fullscreen)
 		flags |= SDL_FULLSCREEN;
 

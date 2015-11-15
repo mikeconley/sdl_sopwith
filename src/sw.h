@@ -137,7 +137,8 @@ typedef enum {               /*  Player states  */
 typedef enum {
         PLAYING,
         WINNER,
-        LOSER
+        LOSER,
+        RESTARTING
 } obendstatus_t;
 
 // sdh 21/10/2001: converted object types to an enum

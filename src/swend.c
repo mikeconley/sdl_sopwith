@@ -69,10 +69,12 @@ void swend(char *msg, BOOL update)
 
 	inplay = FALSE;
 
+/*
 	if (msg || closmsg)
 		exit(YES);
 	else
 		exit(NO);
+*/
 }
 
 

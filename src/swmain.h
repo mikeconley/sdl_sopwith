@@ -85,7 +85,8 @@ extern int latest_player_time[MAX_PLYR];
 extern int num_players;
 
 extern int swmain(int argc, char *argv[]);
-
+extern void tic(void* thing);
+extern void dorestart(void*);
 #endif
 
 

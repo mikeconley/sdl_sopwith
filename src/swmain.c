@@ -39,6 +39,10 @@
 #include "swtitle.h"
 #include "swutil.h"
 
+#ifdef __EMSCRIPTEN__
+#include "emscripten.h"
+#endif
+
 // sdh: framerate control
 
 #define FPS 10
@@ -234,64 +238,84 @@ int swmain(int argc, char *argv[])
 	// sdh 28/10/2001: playmode is called from here now
 	// makes for a more coherent progression through the setup process
 
-	if (!playmode)
-		getgamemode();
+  playmode = PLAYMODE_COMPUTER;
+	//if (!playmode)
+	//	getgamemode();
 	swinitlevel();
 
 	nexttic = Timer_GetMS();
-        skip_time = 0;
+  skip_time = 0;
 
+#ifdef __EMSCRIPTEN__
+  emscripten_set_main_loop_arg(&tic, &nexttic, 0, TRUE);
+#else
 	for (;;) {
-                int nowtime;
-
-		/* generate a new move command periodically
-		 * and send to other players if neccessary */
-
-                nowtime = Timer_GetMS();
-
-		if (nowtime > nexttic
-		 && latest_player_time[player] - countmove < MAX_NET_LAG) {
-
-			new_move();
-
-                        /* Be accurate (exact amount between tics);
-                         * However, if a large spike occurs between tics,
-                         * catch up immediately.
-                         */
-
-                        if (nowtime - nexttic > 1000)
-                                nexttic = nowtime + (1000/FPS);
-                        else
-			        nexttic += (1000 / FPS);
-
-                        // wait a bit longer to compensate for lag
-
-                        nexttic += skip_time;
-                        skip_time = 0;
-		}
-
-		asynupdate();
-		swsndupdate();
-
-		/* if we have all the tic commands we need, we can move */
-
-		if (can_move()) {
-                        calculate_lag();
-			//dump_cmds();
-			swmove();
-			swdisp();
-			swcollsn();
-			swsound();
-		}
-
 		// sdh 15/11/2001: dont thrash the 
 		// processor while waiting
+    tic(&nexttic);
 		Timer_Sleep(10);
 	}
+#endif
 
 	return 0;
 }
 
+void tic(void* thing) {
+  int* nexttic = (int*)thing;
+  int nowtime = Timer_GetMS();
+
+  /* generate a new move command periodically
+   * and send to other players if neccessary */
+
+  if (nowtime > *nexttic && latest_player_time[player] - countmove < MAX_NET_LAG) {
+    new_move();
+
+                      /* Be accurate (exact amount between tics);
+                       * However, if a large spike occurs between tics,
+                       * catch up immediately.
+                       */
+
+                      if (nowtime - *nexttic > 1000)
+                              *nexttic = nowtime + (1000/FPS);
+                      else
+            *nexttic += (1000 / FPS);
+
+                      // wait a bit longer to compensate for lag
+
+                      *nexttic += skip_time;
+                      skip_time = 0;
+  }
+
+  asynupdate();
+  swsndupdate();
+
+  /* if we have all the tic commands we need, we can move */
+
+  if (can_move()) {
+    calculate_lag();
+    //dump_cmds();
+    swmove();
+    swdisp();
+    swcollsn();
+    swsound();
+  }
+
+  if (consoleplayer->ob_endsts != PLAYING &&
+      consoleplayer->ob_endsts != RESTARTING) {
+    consoleplayer->ob_endsts = RESTARTING;
+#ifdef __EMSCRIPTEN__
+    emscripten_async_call(dorestart, NULL, 5000);
+#else
+    Timer_Sleep(1000);
+    swrestart();
+#endif
+  }
+}
+
+void dorestart(void* nothing) {
+  swrestart();
+  playmode = PLAYMODE_COMPUTER;
+}
 
 //---------------------------------------------------------------------------
 //
